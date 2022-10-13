@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "signalr.js@2.4.3",
+      "destination": "wwwroot/signalr.js/",
+      "files": [
+        "jquery.signalR.min.js"
+      ]
+    },
+    {
+      "provider": "jsdelivr",
+      "library": "@10pearls/signalr-no-jquery@0.3.6",
+      "destination": "wwwroot/10pearls/signalr-no-jquery/",
+      "files": [
+        "src/signalR.js"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+    <script src="signalr.js"></script>
+    <script>
+        var _connection = null
+        var _grabbed = false
+        var _indicatorPos = -1;
+        const main = document.querySelector('.main')
+        const _indicator = createIndicator('#dd80ff')
+        const _indicators = {}
+
+        const drawSquares = (squares, onmousedown) => {
+            while (main.hasChildNodes()) {
+                main.removeChild(main.childNodes[0])
+            }
+
+            for (let i = 0; i < squares.length; i++) {
+                const square = document.createElement('div')
+                square.classList.add('square')
+                square.textContent = squares[i];
+                square.setAttribute('index', i)
+                square.onmousedown = onmousedown
+                main.appendChild(square)
+            }
+        }
+
+        const createIndicator = (color) => {
+            const i = document.createElement('div')
+            i.classList.add('indicator')
+            i.style.boxShadow = '0 0 4px ' + color
+            return i
+        }
+
+        const broadcastPosition = (currentPos) =>
+            _connection.send('SendDragEvent', {
+                currentPos,
+                originalPos: parseInt(_grabbed.getAttribute('index')),
+            })
+
+
+        const start = (user, color) => {
+            _connection = new signalR.HubConnectionBuilder()
+                .withUrl(`/square?user=${user}&color=${encodeURIComponent(color)}`)
+                .build();
+
+
+            return _connection.start()
+                .then(() => _connection.invoke('GetSquares'))
+                .then()
+        }
+
+        const init = (squares) => {
+            const grabElement = (e) => {
+                _grabbed = e.target;
+                _grabbed.remove()
+
+                document.querySelector('html').onmouseup = () => {
+                    document.querySelector('html').onmouseup = null
+                    _indicator.remove()
+
+                    const squares = document.querySelectorAll('.square')
+                    if (_indicatorPos === squares.length) {
+                        squares[squares.length - 1].insertAdjacentElement('afterend', _grabbed)
+                    } else {
+                        squares[_indicatorPos].insertAdjacentElement('beforebegin', _grabbed)
+                    }
+
+                    _connection.invoke('EndDrag', {
+                        currentPos: _indicatorPos,
+                        originalPos: parseInt(_grabbed.getAttribute('index')),
+                    }).then(squares => drawSquares(squares, grabElement))
+
+                    _grabbed = null
+                }
+
+                broadcastPosition(_grabbed.getAttribute('index'))
+            }
+        }
+    </script>
+</body>
+</html>

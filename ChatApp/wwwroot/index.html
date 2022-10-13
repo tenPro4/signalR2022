@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+    <script src="signalr.js"></script>
+    <script>
+        var currentRoom = ""
+
+        let connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chat")
+            .build();
+
+        const auth = (u) => fetch('/auth?username=' + u)
+
+        const send = (message) => connection.send('SendMessage', { message, room: currentRoom })
+
+        const create = (room) => fetch('/create?room=' + room)
+
+        const list = () => fetch('/list').then(r => r.json()).then(r => console.log("rooms", r))
+
+        const join = (room) => connection.start()
+            .then(() => connection.invoke('JoinRoom', { room }))
+            .then((history) => {
+                console.log('message history', history)
+                currentRoom = room
+                connection.on('send_message', m => console.log(m))
+            })
+
+        const leave = () => connection.send('LeaveRoom', { room: currentRoom })
+            .then(() => {
+                currentRoom = ''
+                connection.off('send_message')
+                return connection.stop()
+            })
+    </script>
+</body >
+</html >

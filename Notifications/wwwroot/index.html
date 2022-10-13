@@ -1,0 +1,31 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+    <script src="signalr.js"></script>
+    <script>
+        var connection = null
+
+        const auth = (u) => fetch('/auth?user_id=' + u)
+
+        const connect = async () => {
+            if (connection != null && connection.state === 'Connected') {
+                await connection.stop()
+                connection = null;
+            }
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("/notificationHub")
+                .build();
+
+            connection.on('Notify', (m) => console.log('notification', m))
+
+            return connection.start()
+        }
+
+        const notify = (user, msg) => fetch(`/notify?user=${user}&message=${encodeURIComponent(msg)}`)
+    </script>
+</body>
+</html>
